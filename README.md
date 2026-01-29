@@ -1,1 +1,3 @@
-# data-insight-platform-312798
+# Project Repository
+
+This is the initial README file for the project.
