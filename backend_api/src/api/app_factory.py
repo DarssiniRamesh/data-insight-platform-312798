@@ -21,6 +21,8 @@ from fastapi.responses import JSONResponse
 from src.db import init_db
 from src.errors import DomainError, InternalServerError
 from src.repos.audit_repo import create_default_audit_repo
+from src.repos.registration_repo import create_default_registration_repo                  
+from src.repos.policy_repo import create_default_policy_repo 
 from src.api.routers import audit as audit_router
 from src.api.routers import drafts as drafts_router
 from src.api.routers import gates as gates_router
@@ -90,8 +92,12 @@ def create_app(
 
     if registration_repo is not None:
         app.state.registration_repo = registration_repo
+    if getattr(app.state, "registration_repo", None) is None:                            
+        app.state.registration_repo = create_default_registration_repo()
     if policy_repo is not None:
         app.state.policy_repo = policy_repo
+    if getattr(app.state, "policy_repo", None) is None:                                  
+        app.state.policy_repo = create_default_policy_repo()
     if collibra_adapter is not None:
         app.state.collibra_adapter = collibra_adapter
     if immuta_adapter is not None:
