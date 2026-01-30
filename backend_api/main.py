@@ -58,6 +58,18 @@ async def health_check():
     return {"status": "ok"}
 
 
+# PUBLIC_INTERFACE
+@app.get("/healthz", tags=["Health"])
+async def healthz():
+    """
+    Alternative health check endpoint for Kubernetes-style monitoring.
+    
+    Returns:
+        dict: Health status
+    """
+    return {"status": "ok"}
+
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=3001)
+    uvicorn.run(app, host="0.0.0.0", port=3001, reload=False)
