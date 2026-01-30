@@ -20,6 +20,7 @@ from fastapi.responses import JSONResponse
 
 from src.db import init_db
 from src.errors import DomainError, InternalServerError
+from src.repos.audit_repo import create_default_audit_repo
 from src.api.routers import audit as audit_router
 from src.api.routers import drafts as drafts_router
 from src.api.routers import gates as gates_router
@@ -79,9 +80,14 @@ def create_app(
     if init_sqlite:
         init_db()
 
-    # State wiring (optional)
+    # State wiring (optional + safe defaults for runtime)
+    # Tests commonly inject their own repos via app.state after create_app() returns.
     if audit_repo is not None:
         app.state.audit_repo = audit_repo
+    if getattr(app.state, "audit_repo", None) is None:
+        # Provide a safe default so endpoints depending on get_audit_repo don't 500 at runtime.
+        app.state.audit_repo = create_default_audit_repo()
+
     if registration_repo is not None:
         app.state.registration_repo = registration_repo
     if policy_repo is not None:
