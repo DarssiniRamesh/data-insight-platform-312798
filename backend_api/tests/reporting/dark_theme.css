@@ -1,0 +1,221 @@
+/*
+High-contrast dark theme overrides for pytest-html.
+
+Design goals:
+- Very dark background, light text
+- High contrast tables and borders
+- Clear pass/fail/skipped badges
+- Readable code/log blocks (monospace, dark panel)
+- Focus/hover states for interactive controls
+*/
+
+:root {
+  color-scheme: dark;
+}
+
+/* Base */
+html, body {
+  background: #0b1220 !important;
+  color: #e6edf3 !important;
+}
+
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif !important;
+}
+
+/* Headings & text */
+h1, h2, p, #title {
+  color: #e6edf3 !important;
+}
+
+a, a:visited {
+  color: #7dd3fc !important;
+}
+a:hover, a:focus {
+  color: #bae6fd !important;
+  text-decoration: underline !important;
+}
+
+/* Environment table */
+#environment td {
+  border-color: #243041 !important;
+}
+#environment tr:nth-child(odd) {
+  background-color: #0f1a2a !important;
+}
+#environment tr:nth-child(even) {
+  background-color: #0b1220 !important;
+}
+#environment td, #environment li, #environment ul, #environment div {
+  color: #e6edf3 !important;
+}
+
+/* Summary block */
+.summary, .summary__data, .controls, .filters, .collapse {
+  color: #e6edf3 !important;
+}
+
+/* Buttons/controls */
+.filters button,
+.collapse button {
+  color: #a7b3c2 !important;
+  text-decoration: underline !important;
+}
+.filters button:hover,
+.collapse button:hover {
+  color: #e6edf3 !important;
+}
+.filters input[type="checkbox"] {
+  accent-color: #22c55e;
+}
+
+/* Results table */
+#results-table {
+  border-color: #243041 !important;
+  color: #e6edf3 !important;
+  background: #0b1220 !important;
+}
+
+#results-table th,
+#results-table td {
+  border-color: #243041 !important;
+  color: #e6edf3 !important;
+}
+
+#results-table thead th {
+  background: #0f1a2a !important;
+  color: #e6edf3 !important;
+  font-weight: 700 !important;
+}
+
+/* Improve row separation and hover visibility */
+#results-table tbody.results-table-row .collapsible:hover td {
+  background: #101f33 !important;
+}
+
+/* Sorting arrows contrast */
+.sortable.desc:after,
+.sortable.asc:after {
+  border-color: #22c55e transparent !important;
+}
+
+/* Result colors (text) */
+span.passed,
+.passed .col-result {
+  color: #22c55e !important;
+}
+span.failed,
+span.error,
+.failed .col-result,
+.error .col-result {
+  color: #f87171 !important;
+}
+span.skipped,
+span.xfailed,
+span.rerun,
+.skipped .col-result,
+.xfailed .col-result,
+.rerun .col-result {
+  color: #fbbf24 !important;
+}
+span.xpassed,
+.xpassed .col-result {
+  color: #a78bfa !important;
+}
+
+/*
+Badge-like treatment for the Result column.
+pytest-html renders the result cell as plain text, so we style the cell itself.
+*/
+#results-table td.col-result {
+  font-weight: 700 !important;
+}
+
+#results-table tbody.passed td.col-result {
+  background: rgba(34, 197, 94, 0.12) !important;
+  border-left: 4px solid #22c55e !important;
+}
+
+#results-table tbody.failed td.col-result,
+#results-table tbody.error td.col-result {
+  background: rgba(248, 113, 113, 0.14) !important;
+  border-left: 4px solid #f87171 !important;
+}
+
+#results-table tbody.skipped td.col-result,
+#results-table tbody.xfailed td.col-result,
+#results-table tbody.rerun td.col-result {
+  background: rgba(251, 191, 36, 0.14) !important;
+  border-left: 4px solid #fbbf24 !important;
+}
+
+#results-table tbody.xpassed td.col-result {
+  background: rgba(167, 139, 250, 0.14) !important;
+  border-left: 4px solid #a78bfa !important;
+}
+
+/* Extras/log area */
+.extras-row td.extra {
+  background: #0b1220 !important;
+}
+
+/* Log wrapper panel */
+.logwrapper {
+  background-color: #0f1a2a !important;
+  border: 1px solid #243041 !important;
+}
+
+.logwrapper .logexpander {
+  background-color: #0f1a2a !important;
+  border-color: #3a4a63 !important;
+  color: #a7b3c2 !important;
+}
+.logwrapper .logexpander:hover {
+  color: #e6edf3 !important;
+  border-color: #7dd3fc !important;
+}
+
+/* Code/log text */
+.logwrapper .log {
+  background: #0a0f1a !important;
+  color: #e6edf3 !important;
+  border-color: #243041 !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+}
+
+/* Highlight lines already wrapped as span.error by pytest-html JS */
+.logwrapper .log .error {
+  color: #fca5a5 !important;
+  font-weight: 700 !important;
+}
+
+/* Media panel */
+div.media {
+  border-color: #243041 !important;
+  background: #0f1a2a !important;
+}
+.media__name, .media__counter {
+  color: #e6edf3 !important;
+}
+.media-container__nav--left,
+.media-container__nav--right {
+  color: #a7b3c2 !important;
+}
+.media-container__nav--left:hover,
+.media-container__nav--right:hover {
+  color: #e6edf3 !important;
+}
+
+/* "No results found" empty state */
+#not-found-message td,
+#not-found-message {
+  color: #e6edf3 !important;
+}
+
+/* Focus rings for accessibility */
+button:focus,
+a:focus,
+input:focus {
+  outline: 2px solid #7dd3fc !important;
+  outline-offset: 2px !important;
+}
