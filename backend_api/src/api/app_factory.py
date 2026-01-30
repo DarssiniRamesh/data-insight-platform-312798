@@ -104,6 +104,11 @@ def create_app(
         """Health check endpoint."""
         return {"message": "Healthy"}
 
+    @app.get("/healthz", tags=["Health"])
+    async def healthz():
+        """Readiness/liveness probe endpoint used by the preview healthcheck."""
+        return {"status": "ok"}
+
     @app.exception_handler(DomainError)
     async def domain_error_handler(request: Request, exc: DomainError):
         """Return OpenAPI-shaped error payload for domain errors."""
