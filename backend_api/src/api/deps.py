@@ -7,6 +7,7 @@ For compatibility with existing tests, we also fall back to `request.app.state.*
 
 from __future__ import annotations
 
+import datetime
 from typing import Any, Callable
 
 from fastapi import Request
@@ -20,9 +21,8 @@ def get_clock(request: Request) -> Callable[[], str]:
     clock = getattr(request.app.state, "clock", None)
     if clock is None:
         # Default to an ISO-like string; tests override this.
-        import datetime
-
-        return lambda: datetime.datetime.now(datetime.UTC).isoformat().replace("+00:00", "Z")
+        # Use timezone.utc for compatibility across Python versions.
+        return lambda: datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
     return clock
 
 

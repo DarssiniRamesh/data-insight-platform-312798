@@ -12,28 +12,33 @@ Tests should construct the app using this factory and then inject/override:
 
 from __future__ import annotations
 
+import datetime
 from typing import Any, Callable, Optional
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from src.db import init_db
-from src.errors import DomainError, InternalServerError
-from src.repos.audit_repo import create_default_audit_repo
-from src.repos.registration_repo import create_default_registration_repo                  
-from src.repos.policy_repo import create_default_policy_repo 
 from src.api.routers import audit as audit_router
 from src.api.routers import drafts as drafts_router
 from src.api.routers import gates as gates_router
 from src.api.routers import integrations as integrations_router
 from src.api.routers import policies as policies_router
+from src.db import init_db
+from src.errors import DomainError, InternalServerError
+from src.repos.audit_repo import create_default_audit_repo
+from src.repos.policy_repo import create_default_policy_repo
+from src.repos.registration_repo import create_default_registration_repo
 
 
 def _default_clock() -> str:
-    import datetime
+    """
+    Return current UTC time in ISO 8601 format.
 
-    return datetime.datetime.now(datetime.UTC).isoformat().replace("+00:00", "Z")
+    Uses datetime.timezone.utc (instead of datetime.UTC) for compatibility across
+    Python versions used in different preview/CI environments.
+    """
+    return datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 # PUBLIC_INTERFACE
@@ -79,30 +84,57 @@ def create_app(
         allow_headers=["*"],
     )
 
-    if init_sqlite:
-        init_db()
+    # Persist init flag on app.state so the startup hook can reference it.
+    app.state.init_sqlite = init_sqlite
 
-    # State wiring (optional + safe defaults for runtime)
-    # Tests commonly inject their own repos via app.state after create_app() returns.
-    if audit_repo is not None:
-        app.state.audit_repo = audit_repo
-    if getattr(app.state, "audit_repo", None) is None:
-        # Provide a safe default so endpoints depending on get_audit_repo don't 500 at runtime.
-        app.state.audit_repo = create_default_audit_repo()
+    def _ensure_default_wiring() -> None:
+        """
+        Ensure all required app.state dependencies exist.
 
-    if registration_repo is not None:
-        app.state.registration_repo = registration_repo
-    if getattr(app.state, "registration_repo", None) is None:                            
-        app.state.registration_repo = create_default_registration_repo()
-    if policy_repo is not None:
-        app.state.policy_repo = policy_repo
-    if getattr(app.state, "policy_repo", None) is None:                                  
-        app.state.policy_repo = create_default_policy_repo()
-    if collibra_adapter is not None:
-        app.state.collibra_adapter = collibra_adapter
-    if immuta_adapter is not None:
-        app.state.immuta_adapter = immuta_adapter
-    app.state.clock = clock or getattr(app.state, "clock", None) or (lambda: _default_clock())
+        Important: This function never overwrites already-configured values on app.state,
+        so tests can safely set app.state.* after create_app() returns (before startup runs).
+        """
+        if audit_repo is not None and getattr(app.state, "audit_repo", None) is None:
+            app.state.audit_repo = audit_repo
+        if getattr(app.state, "audit_repo", None) is None:
+            # Safe default so endpoints depending on get_audit_repo don't 500 at runtime.
+            app.state.audit_repo = create_default_audit_repo()
+
+        if registration_repo is not None and getattr(app.state, "registration_repo", None) is None:
+            app.state.registration_repo = registration_repo
+        if getattr(app.state, "registration_repo", None) is None:
+            app.state.registration_repo = create_default_registration_repo()
+
+        if policy_repo is not None and getattr(app.state, "policy_repo", None) is None:
+            app.state.policy_repo = policy_repo
+        if getattr(app.state, "policy_repo", None) is None:
+            app.state.policy_repo = create_default_policy_repo()
+
+        if collibra_adapter is not None and getattr(app.state, "collibra_adapter", None) is None:
+            app.state.collibra_adapter = collibra_adapter
+        if immuta_adapter is not None and getattr(app.state, "immuta_adapter", None) is None:
+            app.state.immuta_adapter = immuta_adapter
+
+        if clock is not None and getattr(app.state, "clock", None) is None:
+            app.state.clock = clock
+        if getattr(app.state, "clock", None) is None:
+            app.state.clock = _default_clock
+
+    # Ensure defaults are present immediately (so app.state exists for error handlers, etc.)
+    _ensure_default_wiring()
+
+    @app.on_event("startup")
+    async def _startup_init() -> None:
+        """
+        Initialize persistence + confirm default wiring at service startup.
+
+        This makes preview readiness more robust by ensuring:
+        - tables exist before any request hits DB-backed repos
+        - required repos are available even if a caller forgets to wire them
+        """
+        if getattr(app.state, "init_sqlite", False):
+            init_db()
+        _ensure_default_wiring()
 
     # Include routers
     app.include_router(drafts_router.router)
@@ -124,7 +156,6 @@ def create_app(
     @app.exception_handler(DomainError)
     async def domain_error_handler(request: Request, exc: DomainError):
         """Return OpenAPI-shaped error payload for domain errors."""
-        # If audit repo is configured, log the failure. If not, still return.
         correlation_id = None
         occurred_at = app.state.clock()
         try:
