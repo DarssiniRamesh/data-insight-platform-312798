@@ -1,16 +1,11 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+"""
+FastAPI entrypoint.
 
-app = FastAPI()
+Exposes a module-level `app` for uvicorn and for `generate_openapi.py`.
+"""
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+from __future__ import annotations
 
-@app.get("/")
-def health_check():
-    return {"message": "Healthy"}
+from src.api.app_factory import create_app
+
+app = create_app()
